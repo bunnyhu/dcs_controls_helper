@@ -1,0 +1,80 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.effect.*?>
+<?import javafx.scene.paint.*?>
+<?import javafx.scene.image.*?>
+<?import javafx.geometry.*?>
+<?import javafx.scene.text.*?>
+<?import java.lang.*?>
+<?import java.util.*?>
+<?import javafx.scene.*?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+
+<AnchorPane id="paneMain" fx:id="paneMain" prefHeight="600.0" prefWidth="663.0" scaleShape="false" style="-fx-background-color: #2d3e50;" xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1" fx:controller="dcscontrol.MainDialogController">
+    <children>
+        <Pane id="paneStep1" fx:id="paneStep1" layoutX="1.0" layoutY="2.0" prefHeight="77.0" prefWidth="381.0" style="-fx-border-image-width: 1px; -fx-border-color: #BBB; -fx-border-radius: 10px;">
+            <children>
+                <Button id="btnAddHtml" fx:id="btnAddHtml" layoutX="191.0" layoutY="14.0" mnemonicParsing="false" onAction="#btnOpenAction" style="-fx-background-color: #849494;" text="Add DCS HTML" textAlignment="CENTER" textFill="WHITE">
+                    <tooltip>
+                        <Tooltip text="Add bind commands from DCS generated HTML file" />
+                    </tooltip>
+                    <graphic>
+                        <Label id="icoBtnAddHtml" fx:id="icoBtnAddHtml" text="?" textFill="WHITE">
+                            <font>
+                                <Font name="System Bold" size="12.0" />
+                            </font>
+                        </Label>
+                    </graphic>
+                </Button>
+                <Button id="btnTemplate" fx:id="btnTemplate" layoutX="14.0" layoutY="14.0" mnemonicParsing="false" onAction="#btnOpenTemplateAction" style="-fx-background-color: #849494;" text="Open PDF template" textAlignment="CENTER" textFill="WHITE">
+                    <tooltip>
+                        <Tooltip text="Open PDF template with form fields" />
+                    </tooltip>
+                    <graphic>
+                        <Label id="icoBtnTemplate" fx:id="icoBtnTemplate" text="?" textFill="WHITE">
+                            <font>
+                                <Font name="System Bold" size="12.0" />
+                            </font>
+                        </Label>
+                    </graphic>                    
+                </Button>
+                <Button id="btnClearList" fx:id="btnClearList" layoutX="310.0" layoutY="14.0" mnemonicParsing="false" onAction="#btnClearAction" style="-fx-background-color: #849494;" text="Clear list" textAlignment="CENTER" textFill="WHITE">
+                    <tooltip>
+                        <Tooltip text="Clear the controller list below" />
+                    </tooltip>                    
+                </Button>
+                <Label id="labelStep1Info" fx:id="labelStep1Info" layoutX="14.0" layoutY="46.0" text="Label" textFill="WHITE" />
+            </children>
+        </Pane>
+        <Pane id="paneStep2" fx:id="paneStep2" layoutX="386.0" layoutY="2.0" prefHeight="77.0" prefWidth="176.0" style="-fx-border-image-width: 1px; -fx-border-color: #BBB; -fx-border-radius: 10px;">
+            <children>
+                <Label id="labelStep2Info" fx:id="labelStep2Info" layoutX="5.0" layoutY="46.0" text="Label" textFill="WHITE" />
+                <Button id="btnFillSavePdf" fx:id="btnFillSavePdf" layoutX="5.0" layoutY="14.0" mnemonicParsing="false" onAction="#btnFillSavePdfAction" style="-fx-background-color: #849494;" text="Fill &amp; save as PDF template" textAlignment="CENTER" textFill="WHITE">
+                    <tooltip>
+                        <Tooltip text="Fill the PDF template with import bind commands and save to a new PDF" />
+                    </tooltip>                    
+                </Button>
+            </children>
+        </Pane>
+        <Pane id="paneExit" fx:id="paneExit" layoutX="570.0" layoutY="2.0" prefHeight="77.0" prefWidth="87.0" style="-fx-border-image-width: 1px; -fx-border-color: #BBB; -fx-border-radius: 10px;">
+            <children>
+                <Button id="btnExit" fx:id="btnExit" cancelButton="true" layoutX="13.0" layoutY="16.0" mnemonicParsing="false" onAction="#btnExitAction" prefHeight="46.0" prefWidth="61.0" style="-fx-background-color: #849494;" text="Exit" textAlignment="CENTER" textFill="WHITE">
+                </Button>
+            </children>
+        </Pane>
+        <Pane id="paneTemp" fx:id="paneTemp" layoutX="1.0" layoutY="87.0" prefHeight="510.0" prefWidth="663.0">
+            <children>
+            <TableView id="table" fx:id="table" layoutX="1.0" prefHeight="438.0" prefWidth="657.0" style="-fx-background-color: #d0dae3;">
+              <columns>
+                  <TableColumn id="colFormField" fx:id="colFormField" prefWidth="100.0" text="Form Field" />
+                  <TableColumn id="colBindkey" fx:id="colBindkey" prefWidth="116.0" text="Key/Button" />
+                <TableColumn id="colAction" fx:id="colAction" minWidth="9.0" prefWidth="264.0" text="Action" />
+                <TableColumn id="colDevice" fx:id="colDevice" prefWidth="162.0" text="Device" />
+              </columns>
+            </TableView>
+                <TextArea id="textEventLog" fx:id="textEventLog" editable="false" layoutX="2.0" layoutY="440.0" prefHeight="69.0" prefWidth="657.0" />
+            </children>
+        </Pane>
+    </children>
+</AnchorPane>
