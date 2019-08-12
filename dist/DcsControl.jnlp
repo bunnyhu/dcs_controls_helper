@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<jnlp spec="1.0" xmlns:jfx="http://javafx.com" href="DcsControl.jnlp">
+  <information>
+    <title>DcsControl</title>
+    <vendor>Bunny</vendor>
+    <description>null</description>
+    <offline-allowed/>
+  </information>
+  <resources>
+    <j2se version="1.6+" href="http://java.sun.com/products/autodl/j2se"/>
+    <jar href="DcsControl.jar" size="24474" download="eager" />
+    <jar href="lib\commons-logging-1.2.jar" size="61829" download="eager" />
+    <jar href="lib\fontbox-2.0.16.jar" size="1558165" download="eager" />
+    <jar href="lib\jsoup-1.12.1-javadoc.jar" size="1150759" download="eager" />
+    <jar href="lib\jsoup-1.12.1.jar" size="397112" download="eager" />
+    <jar href="lib\pdfbox-2.0.16.jar" size="2684592" download="eager" />
+    <jar href="lib\pdfbox-tools-2.0.16.jar" size="80633" download="eager" />
+  </resources>
+  <jfx:javafx-desc  width="800" height="600" main-class="dcscontrol.DcsControl"  name="DcsControl" />
+  <update check="always"/>
+</jnlp>
