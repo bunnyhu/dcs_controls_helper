@@ -1,6 +1,8 @@
 # DCS Controls Helper
 Project website: https://github.com/bunnyhu/dcs_controls_helper
 
+**Latest release: https://github.com/bunnyhu/dcs_controls_helper/releases**
+
 Java application: **/dist/DcsControl.jar**
 
 ## Idea
