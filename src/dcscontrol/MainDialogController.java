@@ -18,7 +18,6 @@ import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
 import javafx.scene.control.TextArea;
 import javafx.scene.control.cell.PropertyValueFactory;
-import javafx.scene.layout.AnchorPane;
 import javafx.scene.layout.Pane;
 import javax.swing.JFileChooser;
 import javax.swing.JOptionPane;
@@ -35,21 +34,21 @@ import org.jsoup.select.Elements;
 /**
  * Main Controller Class, button actions, repaint.
  * <p>
- * This project is made for process the DCS (Digital Combat Simulator) joystick / Keyboard binds. 
+ * This project is made for process the DCS (Digital Combat Simulator) joystick / Keyboard binds.
  * Mostly used for my home made DIY controller box called DCS Buddy.
  * <p>
- * I am using a kneeboard sheet to remember the buttons functions, but sometimes 
- * I am redefined them inside DCS. It is painful to update my page because so many 
+ * I am using a kneeboard sheet to remember the buttons functions, but sometimes
+ * I am redefined them inside DCS. It is painful to update my page because so many
  * functions and hard to remember or found what is changed.
  * <p>
- * The project able to read the exported DCS controls HTML file and connect them 
- * to PDF form text fields. You can use multiple controllers and separate the 
+ * The project able to read the exported DCS controls HTML file and connect them
+ * to PDF form text fields. You can use multiple controllers and separate the
  * same commands like joystick buttons with prefix code.
  * <p>
  * https://github.com/bunnyhu/dcs_buddy_helper
- * 
+ *
  * @author Bunny
- * @version 1.0
+ * @version 1.1
  */
 public class MainDialogController implements Initializable {
 
@@ -59,6 +58,10 @@ public class MainDialogController implements Initializable {
     private PDDocument _pdfDocument = null;
     /** Template PDF file name */
     private String _pdfFilename = null;
+    /** DCS controls folder for Add DCS HTML */
+    private String _dcsFolder = null;
+    /** Used PDF folder */
+    private String _pdfFolder = null;
 
     @FXML
     private Pane paneStep2;
@@ -89,14 +92,32 @@ public class MainDialogController implements Initializable {
     public void initialize(URL url, ResourceBundle rb) {
         initViewTable();
         repaint();
+        String tesztFolder = System.getProperty("user.home") + "\\Saved Games\\DCS\\InputLayoutsTxt";
+        File fajl = new File(tesztFolder);
+        if (fajl.exists() && fajl.isDirectory()) {
+            _dcsFolder = fajl.getPath();
+            eventLog("DCS folder found: " + _dcsFolder);
+        } else {
+            fajl = new File(tesztFolder + "\\..");
+            if (fajl.exists() && fajl.isDirectory()) {
+                try {
+                    _dcsFolder = fajl.getCanonicalPath();
+                    eventLog("DCS folder found: " + _dcsFolder);
+                } catch (IOException ex) {
+                    eventLog(ex.getMessage());
+                }
+            } else {
+                eventLog("DCS folder is not found.");
+            }
+        }
     }
-    
+
     /**
      * Add DCS HTML button action
      */
     @FXML
     private void btnOpenAction(ActionEvent event) {
-        File fajl = fileOpenSave("html files", "html", 'o');
+        File fajl = fileOpenSave("html files", "html", 'o', _dcsFolder);
         if (fajl != null) {
             try {
                 String deviceName = DCSTableModel.getDeviceFromFilename(fajl.getName());
@@ -109,6 +130,7 @@ public class MainDialogController implements Initializable {
                 if (prefix == null) {
                     return;
                 }
+                _dcsFolder = fajl.getPath();
                 Document doc = Jsoup.parse(fajl, null);
                 Elements rows = doc.body().getElementsByTag("tr");
                 String c1;
@@ -172,14 +194,25 @@ public class MainDialogController implements Initializable {
     @FXML
     private void btnFillSavePdfAction(ActionEvent event) {
         try {
-            File targetPdf = fileOpenSave("PDF template file", "pdf", 's');
-//            File targetPdf = new File(new URI("file:/C:/Users/Bunny/Documents/java/dcs/dcs_buddy_final.pdf"));
-            if (_pdfDocument != null) {
-                fillTemplateFields();
-                _pdfDocument.save(targetPdf);
-                eventLog("Fill and save PDF template into: " + targetPdf.getName());
-            } else {
-                eventLog("Cannot write target pdf.");
+            File targetPdf = fileOpenSave("PDF file", "pdf", 's', _pdfFolder);
+            if (targetPdf != null) {
+                boolean doit = false;
+                if (targetPdf.exists()) {
+                    if (JOptionPane.showConfirmDialog(null, targetPdf.getName() + " is exist.\nOverwrite?", "File exist", JOptionPane.YES_NO_OPTION) == 0) {
+                        doit = true;
+                    }                    
+                } else {
+                    doit = true;
+                }
+                if (doit) {
+                    if (_pdfDocument != null) {
+                        fillTemplateFields();
+                        _pdfDocument.save(targetPdf);
+                        eventLog("Fill and save PDF template into: " + targetPdf.getName());
+                    } else {
+                        eventLog("Cannot write target pdf.");
+                    }                    
+                }
             }
         } catch (Exception ex) {
             eventLog(ex.getMessage());
@@ -193,8 +226,7 @@ public class MainDialogController implements Initializable {
     @FXML
     private void btnOpenTemplateAction(ActionEvent event) {
         try {
-            File originalPdf = fileOpenSave("PDF template file", "pdf", 'o');
-//            File originalPdf = new File(new URI("file:/C:/Users/Bunny/Documents/java/dcs/dcs_buddy_template.pdf"));
+            File originalPdf = fileOpenSave("PDF template file", "pdf", 'o', _pdfFolder);
             if (originalPdf != null) {
                 if (originalPdf.canRead()) {
                     _pdfFilename = null;
@@ -203,6 +235,7 @@ public class MainDialogController implements Initializable {
                     }
                     _pdfDocument = PDDocument.load(originalPdf);
                     _pdfFilename = originalPdf.getName();
+                    _pdfFolder =  originalPdf.getPath();
                     eventLog("Template PDF file open: " + _pdfFilename);
                 } else {
                     eventLog("The template file is not readable.");
@@ -222,12 +255,14 @@ public class MainDialogController implements Initializable {
      * @param extension file extension ex: "pdf"
      * @return HTML file or null if error or no select
      */
-    private File fileOpenSave(String filterDetail, String extension, char command) {
+    private File fileOpenSave(String filterDetail, String extension, char command, String directory) {
         try {
             JFileChooser chooser = new JFileChooser();
             FileNameExtensionFilter filter = new FileNameExtensionFilter(filterDetail, extension);
             chooser.setFileFilter(filter);
-            chooser.setCurrentDirectory(new File("c:\\Users\\Bunny\\Documents\\java\\dcs"));
+            if (directory != null && !directory.isEmpty()) {
+                chooser.setCurrentDirectory(new File(directory));
+            }
             int returnVal = JFileChooser.CANCEL_OPTION;
             switch ( Character.toLowerCase(command) ) {
                 case 'o': returnVal = chooser.showOpenDialog(null);
@@ -262,14 +297,14 @@ public class MainDialogController implements Initializable {
                         break;
                     }
                 }
-            }            
+            }
         } catch (IOException e) {
             eventLog("I/O error: " + e.getMessage());
         } catch (Exception e) {
-            eventLog("Error: " + e.getMessage());            
+            eventLog("Error: " + e.getMessage());
         }
-    }  
-    
+    }
+
     /**
      * Repaint the main window
      * <p>
@@ -279,7 +314,7 @@ public class MainDialogController implements Initializable {
         labelStep1Info.setText("");
         icoBtnAddHtml.setText("?");
         icoBtnTemplate.setText("?");
-        
+
         paneStep2.setDisable(true);
         labelStep2Info.setText("");
         btnAddHtml.setDisable(true);
@@ -326,11 +361,11 @@ public class MainDialogController implements Initializable {
             new PropertyValueFactory<DCSTableModel,String>("device")
         );
         colDevice.setSortable(false);
-        table.setItems(viewTableData);        
+        table.setItems(viewTableData);
     }
-    
+
     /**
-     * Recalculate the view table and join the form field commands to the 
+     * Recalculate the view table and join the form field commands to the
      * HTML imported commands. It is used after read a PDF template or a HTML
      * controller info file
      */
@@ -339,16 +374,16 @@ public class MainDialogController implements Initializable {
             PDDocumentCatalog docCatalog = _pdfDocument.getDocumentCatalog();
             PDAcroForm acroForm = docCatalog.getAcroForm();
             List fields = acroForm.getFields();
-            Iterator fieldsIter = fields.iterator();            
+            Iterator fieldsIter = fields.iterator();
             while (fieldsIter.hasNext()) {
                 PDField field = (PDField) fieldsIter.next();
-                for (int i = 0; i < viewTableData.size(); i++) {                    
+                for (int i = 0; i < viewTableData.size(); i++) {
                     if (viewTableData.get(i).getBindkey().equals(field.getFullyQualifiedName())) {
                         viewTableData.get(i).setFormkey(field.getFullyQualifiedName());
                         break;
                     }
                 }
-            }            
+            }
         }
     }
 }
