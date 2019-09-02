@@ -44,6 +44,8 @@ Like JOY_BTN1 , TC_JOY_BTN1 , A_JOY_BTN1.
 - Menu: Form / Control properties => General / Name = *JOY_BTN1*
 - Menu: File / Export as PDF (check the "Create PDF Form" box!)
 
+- Open the template PDF in the Adobe Reader and save it without any changing (you can owerwrite the original one). This step is need because the Kneeboard Builder cannot read the content of the text fields from the original Libre Office saved PDF file. I am not sure why (maybe PDF version of some stuctural different), but this is help. So, just do it, like a mambo jambo hocus-pocus :)
+
 Libre Office: https://www.libreoffice.org
 
 ### Step 3
