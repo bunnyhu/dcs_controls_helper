@@ -39,22 +39,32 @@ The form fields name will be follow the DCS controller names schema, like JOY_BT
 If you want to use more controller on one page, use prefix(es) that I suggested. 
 Like JOY_BTN1 , TC_JOY_BTN1 , A_JOY_BTN1.
 
+From version 1.2 there is a new, virtual field name **Modes**. 
+This field (suggested: multiline text field) filled with all Modes function from Flaming Cliffs 3. planes. 
+That is usually binded to the 1-9 numbers, like (1) Navigation Modes , (3) Close Air Combat etc. 
+You must read with this app the <i>Keyboard.html</i>  file to fill this field!
+
 **How to make form field with Libre Office:**
 - Menu: Form / Text Box 
 - Menu: Form / Control properties => General / Name = *JOY_BTN1*
 - Menu: File / Export as PDF (check the "Create PDF Form" box!)
 
-Libre Office: https://www.libreoffice.org
+After you export as PDF file, please **open it in Adobe Acrobat Reader and save it**. 
+The pdf library that I using have some issue with Libre Office PDF.
 
+Libre Office: https://www.libreoffice.org
+Acrobat Reader: https://get.adobe.com/reader
 ### Step 3
 - If the template is done, open my **DcsControl.jar** java application. You need the java runtime on your computer to run it.
 - **Open PDF template**, then **Add DCS HTML** files that you want to attach to your template fields. Do not forget using prefix if you used it in the PDF template. You can check the command - action pairs in the table.
-- Hit the **Fill & save as PDF template** button to save the final PDF file. If you do everything well, the text fields is filled with actions.
+- Hit the **Fill & save as PDF template** button to save the final PDF and PNG files. If you do everything well, the text fields is filled with actions.
 
 Java: https://www.java.com/en/
 ### Step 4
 For using your hint sheet in the DCS, you must make a kneeboard page from the PDF.
-Th easiest way is use the Kneeboard builder! That can import PDF and export into the correct folder like a Kneeboard page, and free of course.
+The easiest way is use the Kneeboard builder! That can import PDF and export into the correct folder like a Kneeboard page, and free of course.
+Also there is the png file that you can copy manually into "c:\Users\ *yourusername* \Saved Games\DCS\Kneeboard\ *airplanetype*" folder.
+If the text boxes is empties, You missed the Acrobat Reader overwrite method that I mentioned in the Step 2.
 
 http://www.dcskneeboardbuilder.com
 ### Step 5
@@ -66,6 +76,7 @@ Check the DCS controls page for command key to show the kneeboard inside your pl
 In the Example folder there is a test PDF template and my SU-33 controls export files. 
 - The Arduino Leonardo have no prefix.
 - The Cyborg 3D USB have prefix: **SC_** (like SC_JOY_BTN1) please dont forget to set. It is uppercase!
+- Also read the Keyboard.html
 
 # Licence
 The java code is licensed under the GNU General Public License v3.0
@@ -73,3 +84,8 @@ The java code is licensed under the GNU General Public License v3.0
 # External Libraries
 - [jsoup: Java HTML Parser](https://jsoup.org/)
 - [Apache PDFBox 2.0](https://pdfbox.apache.org/)
+
+# History
+1.2 - Add Modes virtual field, png saving, some improvment
+1.1.1 - Add readme.txt
+1.0 - First release

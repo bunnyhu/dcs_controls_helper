@@ -1,5 +1,6 @@
 package dcscontrol;
 
+import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
 import java.net.URL;
@@ -26,6 +27,10 @@ import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.pdmodel.PDDocumentCatalog;
 import org.apache.pdfbox.pdmodel.interactive.form.PDAcroForm;
 import org.apache.pdfbox.pdmodel.interactive.form.PDField;
+import org.apache.pdfbox.rendering.ImageType;
+import org.apache.pdfbox.rendering.PDFRenderer;
+import org.apache.pdfbox.rendering.RenderDestination;
+import org.apache.pdfbox.tools.imageio.ImageIOUtil;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
@@ -48,7 +53,7 @@ import org.jsoup.select.Elements;
  * https://github.com/bunnyhu/dcs_buddy_helper
  *
  * @author Bunny
- * @version 1.1
+ * @version 1.2
  */
 public class MainDialogController implements Initializable {
 
@@ -105,6 +110,7 @@ public class MainDialogController implements Initializable {
                     eventLog("DCS folder found: " + _dcsFolder);
                 } catch (IOException ex) {
                     eventLog(ex.getMessage());
+                    JOptionPane.showMessageDialog(null, ex.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
                 }
             } else {
                 eventLog("DCS folder is not found.");
@@ -152,8 +158,10 @@ public class MainDialogController implements Initializable {
                 eventLog( fajl.getName() + " HTML file add.");
             } catch (IOException ex) {
                 eventLog("File open error: " + ex.getMessage());
+                JOptionPane.showMessageDialog(null, ex.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
             } catch (Exception ex) {
                 eventLog("Error: " + ex.getMessage());
+                JOptionPane.showMessageDialog(null, ex.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
             }
         }
         tableDataRecalculate();
@@ -180,8 +188,9 @@ public class MainDialogController implements Initializable {
                 _pdfDocument.close();
                 _pdfDocument = null;
             }
-        } catch (IOException e) {
-            eventLog("IO Error: " + e.getMessage());
+        } catch (IOException ex) {
+            eventLog("IO Error: " + ex.getMessage());
+            JOptionPane.showMessageDialog(null, ex.getMessage(), "IO Error", JOptionPane.ERROR_MESSAGE);
         }
         _pdfFilename = "";
         repaint();
@@ -196,11 +205,16 @@ public class MainDialogController implements Initializable {
         try {
             File targetPdf = fileOpenSave("PDF file", "pdf", 's', _pdfFolder);
             if (targetPdf != null) {
+                if (!targetPdf.getName().toLowerCase().endsWith(".pdf")) {
+                    eventLog("Target file renamed from: " + targetPdf.getCanonicalFile());
+                    targetPdf = new File(targetPdf.getCanonicalFile() + ".pdf");
+                    eventLog("Target file renamed to: " + targetPdf.getCanonicalFile());                    
+                }
                 boolean doit = false;
                 if (targetPdf.exists()) {
                     if (JOptionPane.showConfirmDialog(null, targetPdf.getName() + " is exist.\nOverwrite?", "File exist", JOptionPane.YES_NO_OPTION) == 0) {
                         doit = true;
-                    }                    
+                    }
                 } else {
                     doit = true;
                 }
@@ -209,13 +223,20 @@ public class MainDialogController implements Initializable {
                         fillTemplateFields();
                         _pdfDocument.save(targetPdf);
                         eventLog("Fill and save PDF template into: " + targetPdf.getName());
+                        // Saving image as well
+                        PDFRenderer pdfRenderer = new PDFRenderer(_pdfDocument);
+                        String PngFilename = targetPdf.getCanonicalFile()+ ".png";
+                        BufferedImage bim = pdfRenderer.renderImageWithDPI(0, 200, ImageType.RGB);
+                        ImageIOUtil.writeImage(bim, PngFilename, 200);
+                        eventLog("Save as PNG into: " + PngFilename );
                     } else {
                         eventLog("Cannot write target pdf.");
-                    }                    
+                    }
                 }
             }
         } catch (Exception ex) {
             eventLog(ex.getMessage());
+            JOptionPane.showMessageDialog(null, ex.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
         }
         repaint();
     }
@@ -243,6 +264,7 @@ public class MainDialogController implements Initializable {
             }
         } catch (Exception ex) {
             eventLog(ex.getMessage());
+            JOptionPane.showMessageDialog(null, ex.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
         }
         tableDataRecalculate();
         repaint();
@@ -275,12 +297,19 @@ public class MainDialogController implements Initializable {
             }
         } catch (Exception ex) {
             eventLog(ex.getMessage());
+            JOptionPane.showMessageDialog(null, ex.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
         }
         return null;
     }
 
     /**
      * Fill the PDF template form fields with data array
+     * <p>
+     * There is special virtual field in the template: <b>Modes</b>
+     * <p>
+     * This field (suggested a multiline text field) filled with all Modes function, that is
+     * usually binded to the 1-9 numbers, like 1) Navigation Modes , 3) Close Air Combat
+     * etc. You must read the <i>Keyboard.html</i>  file to fill this field!
      */
     @SuppressWarnings("rawtypes")
     private void fillTemplateFields() {
@@ -292,16 +321,24 @@ public class MainDialogController implements Initializable {
             while (fieldsIter.hasNext()) {
                 PDField field = (PDField) fieldsIter.next();
                 for (int i = 0; i < viewTableData.size(); i++) {
-                    if (viewTableData.get(i).getBindkey().equals(field.getFullyQualifiedName())) {
+                    if (field.getFullyQualifiedName().equals("Modes")) {
+                        if (viewTableData.get(i).getGroup().equals(field.getFullyQualifiedName())) {
+                            if (viewTableData.get(i).getAction().matches("\\(\\d\\).*")) {
+                                field.setValue(field.getValueAsString() + viewTableData.get(i).getAction() + "\n");
+                            }
+                        }
+                    } else if (viewTableData.get(i).getBindkey().equals(field.getFullyQualifiedName())) {
                         field.setValue(viewTableData.get(i).getAction());
                         break;
                     }
                 }
             }
-        } catch (IOException e) {
-            eventLog("I/O error: " + e.getMessage());
-        } catch (Exception e) {
-            eventLog("Error: " + e.getMessage());
+        } catch (IOException ex) {
+            eventLog("I/O error: " + ex.getMessage());
+            JOptionPane.showMessageDialog(null, ex.getMessage(), "IO Error", JOptionPane.ERROR_MESSAGE);
+        } catch (Exception ex) {
+            eventLog("Error: " + ex.getMessage());
+            JOptionPane.showMessageDialog(null, ex.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
         }
     }
 
