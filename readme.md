@@ -86,6 +86,7 @@ The java code is licensed under the GNU General Public License v3.0
 - [Apache PDFBox 2.0](https://pdfbox.apache.org/)
 
 # History
-1.2 - Add Modes virtual field, png saving, some improvement
-1.1.1 - Add readme.txt
-1.0 - First release
+- 1.2.1 - Add Thrustmaster Hotas Warthog template
+- 1.2 - Add Modes virtual field, png saving, some improvement
+- 1.1.1 - Add readme.txt
+- 1.0 - First release
