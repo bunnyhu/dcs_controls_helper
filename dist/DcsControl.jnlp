@@ -8,7 +8,7 @@
   </information>
   <resources>
     <j2se version="1.6+" href="http://java.sun.com/products/autodl/j2se"/>
-    <jar href="DcsControl.jar" size="25713" download="eager" />
+    <jar href="DcsControl.jar" size="25715" download="eager" />
     <jar href="lib\commons-logging-1.2.jar" size="61829" download="eager" />
     <jar href="lib\fontbox-2.0.16.jar" size="1558165" download="eager" />
     <jar href="lib\jsoup-1.12.1-javadoc.jar" size="1150759" download="eager" />

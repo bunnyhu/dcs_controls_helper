@@ -145,7 +145,7 @@ public class MainDialogController implements Initializable {
                 String c4 = deviceName;
                 for (Element row : rows) {
                     Elements cols = row.getElementsByTag("td");
-                    if (cols.size() == 3) {
+                    if (cols.size() >= 3) {
                         c1 = prefix + cols.get(0).text().replace("\"", "");
                         c2 = cols.get(1).text();
                         c3 = cols.get(2).text();
