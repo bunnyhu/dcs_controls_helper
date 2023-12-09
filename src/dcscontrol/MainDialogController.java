@@ -1,13 +1,31 @@
 package dcscontrol;
 
+
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
 import java.net.URL;
+import java.time.LocalDateTime; // Import the LocalDateTime class
+import java.time.format.DateTimeFormatter; // Import the DateTimeFormatter class
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 import java.util.ResourceBundle;
+
+import javax.swing.JFileChooser;
+import javax.swing.JOptionPane;
+import javax.swing.filechooser.FileNameExtensionFilter;
+
+
+//import org.jsoup.nodes.Document;
+
+import org.apache.pdfbox.pdmodel.PDDocument;
+import org.apache.pdfbox.pdmodel.PDDocumentCatalog;
+import org.apache.pdfbox.pdmodel.interactive.form.PDAcroForm;
+import org.apache.pdfbox.pdmodel.interactive.form.PDField;
+import org.apache.pdfbox.rendering.ImageType;
+import org.apache.pdfbox.rendering.PDFRenderer;
+import org.apache.pdfbox.tools.imageio.ImageIOUtil;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.event.ActionEvent;
@@ -20,21 +38,6 @@ import javafx.scene.control.TableView;
 import javafx.scene.control.TextArea;
 import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.layout.Pane;
-import javax.swing.JFileChooser;
-import javax.swing.JOptionPane;
-import javax.swing.filechooser.FileNameExtensionFilter;
-import org.apache.pdfbox.pdmodel.PDDocument;
-import org.apache.pdfbox.pdmodel.PDDocumentCatalog;
-import org.apache.pdfbox.pdmodel.interactive.form.PDAcroForm;
-import org.apache.pdfbox.pdmodel.interactive.form.PDField;
-import org.apache.pdfbox.rendering.ImageType;
-import org.apache.pdfbox.rendering.PDFRenderer;
-import org.apache.pdfbox.rendering.RenderDestination;
-import org.apache.pdfbox.tools.imageio.ImageIOUtil;
-import org.jsoup.Jsoup;
-import org.jsoup.nodes.Document;
-import org.jsoup.nodes.Element;
-import org.jsoup.select.Elements;
 
 /**
  * Main Controller Class, button actions, repaint.
@@ -57,7 +60,9 @@ import org.jsoup.select.Elements;
  */
 public class MainDialogController implements Initializable {
 
-    /** DCS data table */
+    private static Object Jsoup;
+	public static final Object OBJECT = Jsoup;
+	/** DCS data table */
     private ObservableList<DCSTableModel> viewTableData = FXCollections.observableArrayList();
     /** Template PDF document */
     private PDDocument _pdfDocument = null;
@@ -67,7 +72,10 @@ public class MainDialogController implements Initializable {
     private String _dcsFolder = null;
     /** Used PDF folder */
     private String _pdfFolder = null;
+    
+    private String _aircraft = null;
 
+    
     @FXML
     private Pane paneStep2;
     @FXML
@@ -113,7 +121,18 @@ public class MainDialogController implements Initializable {
                     JOptionPane.showMessageDialog(null, ex.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
                 }
             } else {
-                eventLog("DCS folder is not found.");
+                fajl = new File(tesztFolder + "\\.." + "\\..");
+                if (fajl.exists() && fajl.isDirectory()) {
+                    try {
+                        _dcsFolder = fajl.getCanonicalPath();
+                        eventLog("DCS folder is not found");
+                    } catch (IOException ex) {
+                        eventLog(ex.getMessage());
+                        JOptionPane.showMessageDialog(null, ex.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
+                    }
+                } else {
+                    eventLog("Saved Games folder is not found.");
+                }
             }
         }
     }
@@ -137,23 +156,56 @@ public class MainDialogController implements Initializable {
                     return;
                 }
                 _dcsFolder = fajl.getPath();
-                Document doc = Jsoup.parse(fajl, null);
-                Elements rows = doc.body().getElementsByTag("tr");
+                org.jsoup.nodes.Document doc = ((org.jsoup.Jsoup) Jsoup).parse(fajl, null);
+                org.jsoup.select.Elements rows = doc.body().getElementsByTag("tr");
                 String c1;
+                String c_temp;
                 String c2;
                 String c3;
                 String c4 = deviceName;
-                for (Element row : rows) {
-                    Elements cols = row.getElementsByTag("td");
+                for (org.jsoup.nodes.Element row : rows) {
+                    org.jsoup.select.Elements cols = row.getElementsByTag("td");
                     if (cols.size() >= 3) {
-                        c1 = prefix + cols.get(0).text().replace("\"", "");
+                        c_temp = cols.get(0).text().replace("\"", "");
                         c2 = cols.get(1).text();
                         c3 = cols.get(2).text();
+                        
+                        /**
+                        *buscamos si hay un guión, es que hay dos botones: JOY_BTN4 - JOY_BTN_POV1_D
+                        *y substituimos todo lo que hay delante por MOD-: MOD-JOY_BTN_POV1_D
+                        *así sabemos que esa acción lleva modificador.
+                        *Y en la plantilla debe existir un campo con ese nombre.
+                        */
+                        
+                        int index = c_temp.indexOf('-');
+                        if (index > 0) {
+                        	c_temp = "MOD-" + c_temp.substring(index + 2);
+                        }                                              
+                        c1 = prefix + c_temp;
+                        
                         if (!c1.isEmpty() && (!c1.equals(prefix))) {
                             viewTableData.add(new DCSTableModel(c1, c2, c3, c4, ""));
                         }
                     }
                 }
+                
+                //Añadimos la fecha y el modelo de avión
+                DateTimeFormatter myFormatObj = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm");  
+                String formattedDate = LocalDateTime.now().format(myFormatObj); 
+                viewTableData.add(new DCSTableModel("PRINT_DATE",formattedDate, "", "", ""));
+
+	            if (_aircraft == null) { //para que solo pregunte una vez
+                	String carpeta = fajl.getParent().substring(fajl.getParent().lastIndexOf(File.separator) + 1);
+	                _aircraft = (String)JOptionPane.showInputDialog(null,
+	                        "Here you can type the name of the aircraft.\n",
+	                        "Optional name for aircraft "  + carpeta, JOptionPane.QUESTION_MESSAGE, null, null, carpeta);
+	                if (_aircraft == null) {
+	                	_aircraft = carpeta; //para el nombre del archivo
+	                    return;
+	                }
+	                else viewTableData.add(new DCSTableModel("AIRCRAFT_TYPE", _aircraft, "", "", ""));
+	            }
+
                 Collections.sort(viewTableData);
                 eventLog( fajl.getName() + " HTML file add.");
             } catch (IOException ex) {
@@ -222,13 +274,45 @@ public class MainDialogController implements Initializable {
                     if (_pdfDocument != null) {
                         fillTemplateFields();
                         _pdfDocument.save(targetPdf);
-                        eventLog("Fill and save PDF template into: " + targetPdf.getName());
+                        eventLog("Filled and saved PDF template into: " + targetPdf.getName());
                         // Saving image as well
                         PDFRenderer pdfRenderer = new PDFRenderer(_pdfDocument);
-                        String PngFilename = targetPdf.getCanonicalFile()+ ".png";
-                        BufferedImage bim = pdfRenderer.renderImageWithDPI(0, 200, ImageType.RGB);
-                        ImageIOUtil.writeImage(bim, PngFilename, 200);
-                        eventLog("Save as PNG into: " + PngFilename );
+
+                        DateTimeFormatter myFormatObj = DateTimeFormatter.ofPattern("-(yyMMdd HH.mm)");  
+                        String formattedDate = LocalDateTime.now().format(myFormatObj); 
+                        
+                        for (int page = 0; page < _pdfDocument.getNumberOfPages(); ++page)
+                        { 
+                        	String PngFilename = targetPdf.getCanonicalFile().toString().replace(".pdf", "") + formattedDate + "-" + (page+1) + ".png";
+                        	// suffix in filename will be used as the file format
+                        	BufferedImage bim = pdfRenderer.renderImageWithDPI(page, 200, ImageType.RGB);
+                            //si existe la eliminamos antes                   	
+                        	try { 
+                                // Get the file 
+                                File f = new File(PngFilename);  
+                                // delete file
+                                //System.out.println("ahora veremos si existe");
+                                //if (f.exists()) {
+                                //	System.out.println("Exists a previous image"); 
+	                            //    if (f.delete()) {
+	                            //        System.out.println("Previous file deleted"); 
+	                                	//ImageIOUtil.writeImage(bim, PngFilename, 200);
+	                                	//eventLog("Saved as PNG into: " + PngFilename );
+	                            //    }
+	                            //    else
+	                            //        System.out.println("Previous file was not deleted"); 
+                                //}
+                                //else
+                                	ImageIOUtil.writeImage(bim, PngFilename, 200);
+                            		eventLog("Saved as PNG into: " + PngFilename );
+                        	}
+                            catch (Exception e) { 
+                                System.err.println(e); 
+                                eventLog("Unable to save as PNG into: " + PngFilename );
+                            } 
+            
+                        }
+                        
                     } else {
                         eventLog("Cannot write target pdf.");
                     }
@@ -287,9 +371,14 @@ public class MainDialogController implements Initializable {
             }
             int returnVal = JFileChooser.CANCEL_OPTION;
             switch ( Character.toLowerCase(command) ) {
-                case 'o': returnVal = chooser.showOpenDialog(null);
+                case 'o': 
+                	returnVal = chooser.showOpenDialog(null);
                     break;
-                case 's': returnVal = chooser.showSaveDialog(null);
+                case 's': 
+                	DateTimeFormatter myFormatObj = DateTimeFormatter.ofPattern("-(yyMMdd HH.mm)");  
+                    String formattedDate = LocalDateTime.now().format(myFormatObj);
+                	chooser.setSelectedFile(new File(_aircraft + formattedDate + ".pdf"));
+                	returnVal = chooser.showSaveDialog(null);
                     break;
             }
             if (returnVal == JFileChooser.APPROVE_OPTION) {
@@ -357,12 +446,12 @@ public class MainDialogController implements Initializable {
         btnAddHtml.setDisable(true);
         if ((_pdfDocument != null) && (_pdfDocument.getNumberOfPages()>0)) {
             labelStep1Info.setText(_pdfFilename);
-            icoBtnTemplate.setText("✔");
+            icoBtnTemplate.setText("✓");
             btnAddHtml.setDisable(false);;
         }
         if (!viewTableData.isEmpty()) {
             labelStep1Info.setText(labelStep1Info.getText() + " " + viewTableData.size() + " binded actions");
-            icoBtnAddHtml.setText("✔");
+            icoBtnAddHtml.setText("✓");
         }
         if (!viewTableData.isEmpty() && (_pdfDocument != null)) {
             paneStep2.setDisable(false);
